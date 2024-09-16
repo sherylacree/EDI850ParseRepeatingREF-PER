@@ -7,21 +7,36 @@ using System.IO;
 using System.Globalization;
 
 namespace EDI850ParseRepeatingREF_PER {
-   public class PurchaseOrder850 {
-    public string PONum;
-    public DateTime PODate;
-    public string PODateText;
-    public string POType;
-    public string VendorNumber;
-    public string BuyerName;
-    public string BuyerTelephone;
+    public class PurchaseOrder850 {
+        public string PONum;
+        public DateTime PODate;
+        public string PODateText;
+        public string POType;
+        public string VendorNumber;
+        public string BuyerName;
+        public string BuyerTelephone;
+        public List<PurchaseOrder850LineItem> LineItems ;
 
     }
+
+    public class PurchaseOrder850LineItem
+    {
+    public string lineitem;
+    public int quantity;
+    public string uom;
+    public decimal price;
+    public string basisOfUnitPrice;
+    public string catalogNumber;
+    public string description;
+    public string dateRequiredText;
+    public DateTime dateRequired;
+    }
+
 
 
     class Program {
         static void Main(string[] args) {
-            string ediFilename = @"C:\Users\Sheryl.Acree\Desktop\Sample_850_01_Orig.edi";
+            string ediFilename = @"\\tql.com\shares\RedirectedFolders\Sheryl.Acree\My Documents\Udemy EDI Training Documents\Sample_850_01_Orig.edi.txt";
             //insert any file name above
             string ediFileContents = File.ReadAllText(ediFilename);
 
@@ -42,6 +57,8 @@ namespace EDI850ParseRepeatingREF_PER {
             Console.WriteLine("lineSeperator = " + lineSeperator);
 
             PurchaseOrder850 po850 = new PurchaseOrder850();
+            PurchaseOrder850LineItem lineItem = new PurchaseOrder850LineItem();
+            po850.LineItems = new List<PurchaseOrder850LineItem>();
 
 
             string[] lines = ediFileContents.Split(char.Parse(lineSeperator));
@@ -99,6 +116,33 @@ namespace EDI850ParseRepeatingREF_PER {
                                     po850.BuyerTelephone = el;
                                 }
                                 break;
+                            case "PO101":
+                                lineItem.lineitem = el;
+                                break;
+                            case "PO102":
+                                lineItem.quantity = Int32.Parse(el);
+                                break;
+                            case "PO103":
+                                lineItem.uom = el;
+                                break;
+                            case "PO104":
+                                lineItem.price = Decimal.Parse(el);
+                                break;
+                            case "PO105":
+                                lineItem.basisOfUnitPrice = el;
+                                break;
+                            case "PO107":
+                                lineItem.catalogNumber = el;
+                                break;
+                            case "PID05":
+                                lineItem.description = el;
+                                break;
+                            case "DTM02":
+                                lineItem.dateRequiredText= el;
+                                lineItem.dateRequired = DateTime.ParseExact(el, "yyyyMMdd",CultureInfo.InvariantCulture);
+                                po850.LineItems.Add(lineItem);
+                                lineItem = new PurchaseOrder850LineItem();
+                                break;
                         }
 
                     }
@@ -106,8 +150,22 @@ namespace EDI850ParseRepeatingREF_PER {
                 }
                 Console.WriteLine("*** PONum = " + po850.PONum + " PO Date = " + po850.PODateText + " PO Type = " + po850.POType);
                 Console.WriteLine("*** Vendor = " + po850.VendorNumber + " Buyer Name : " + po850.BuyerName + " Buyer Telephone : " + po850.BuyerTelephone);
+                foreach (PurchaseOrder850LineItem item in po850.LineItems) {
+                    Console.WriteLine("***** " + item.lineitem + " " +
+                        " qty = " + item.quantity + " " +
+                        " uom = " + item.uom + " " +
+                        " price = " + item.price + " " +
+                        " basis = " + item.basisOfUnitPrice + " " +
+                        " description = " + item.description + " " +
+                        " reqDate = " + item.dateRequired
+                        );
+                }
+
+                        
+
+                }
                 
-            }
+            
             Console.WriteLine("\n\n Press enter to end;");//to keep the data on screen
             Console.ReadLine();
         }
